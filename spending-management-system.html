@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Scheduling System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .step, .tab-content {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .active {
+            display: block;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: black;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Budget Scheduling System</h1>
+    
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'NewTransfer')">New Transfer</button>
+        <button class="tablinks" onclick="openTab(event, 'History')">Transaction History</button>
+        <button class="tablinks" onclick="openTab(event, 'Unredeemed')">Unredeemed Cash</button>
+        <button class="tablinks" onclick="openTab(event, 'UploadFile')">Upload Spending History</button>
+    </div>
+
+    <div id="NewTransfer" class="tab-content">
+        <div id="step1" class="step active">
+            <h2>Step 1: Transfer Setup</h2>
+            <p>Welcome to the Budget Scheduling System. Click 'Next' to set up a new transfer.</p>
+            <button onclick="nextStep()">Next</button>
+        </div>
+
+        <div id="step2" class="step">
+            <h2>Schedule Transfer</h2>
+            <p>From Account: <select id="fromAccount" onchange="updateBalance()">
+                <option value="savings">Savings Account (Balance: R5000)</option>
+                <option value="current">Current Account (Balance: R2000)</option>
+            </select></p>
+            <p>To Account: <select id="toAccount">
+                <option>Savings Goal</option>
+                <option>Credit Card Payment</option>
+            </select></p>
+            <p>Amount: R<input type="number" id="amount" min="0" step="0.01" onchange="updateBalance()"></p>
+            <p>Frequency: <select id="frequency">
+                <option>Once-off</option>
+                <option>Weekly</option>
+                <option>Monthly</option>
+            </select></p>
+            <p>Date: <input type="date" id="transferDate"></p>
+            <p>Time: <input type="time" id="transferTime"></p>
+            <p id="currentBalance">Current Balance: R5000</p>
+            <p id="newBalance">New Balance after transfer: R5000</p>
+            <button onclick="nextStep()">Next</button>
+        </div>
+
+        <div id="step3" class="step">
+            <h2>Confirmation</h2>
+            <p>Please confirm your transfer details:</p>
+            <div id="confirmationDetails"></div>
+            <button onclick="confirmTransfer()">Confirm Transfer</button>
+        </div>
+
+        <div id="step4" class="step">
+            <h2>Transfer Scheduled</h2>
+            <p>Your transfer has been successfully scheduled!</p>
+            <button onclick="resetSimulation()">Schedule Another Transfer</button>
+        </div>
+    </div>
+
+    <div id="History" class="tab-content">
+        <h2>Transaction History</h2>
+        <table id="historyTable">
+            <tr>
+                <th>Date & Time</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </table>
+    </div>
+
+    <div id="Unredeemed" class="tab-content">
+        <h2>Unredeemed Cash</h2>
+        <table id="unredeemedTable">
+            <tr>
+                <th>Scheduled Date & Time</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+                <th>Action</th>
+            </tr>
+        </table>
+    </div>
+
+    <div id="UploadFile" class="tab-content">
+        <h2>Upload Spending History</h2>
+        <p>Upload your spending history from a .txt file to get suggestions for the next month.</p>
+        <input type="file" id="fileInput" accept=".txt" />
+        <button onclick="processFile()">Process File</button>
+        <h3>Analysis Result</h3>
+        <pre id="fileContent"></pre>
+        <h3>Suggested Spending Plan for Next Month</h3>
+        <div id="suggestions"></div>
+        <h3>Recommended Scheduling Dates</h3>
+        <div id="recommendedDates"></div>
+        <button onclick="confirmRecommendations()">Confirm Recommendations</button>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let transactions = [];
+        let unredeemedCash = [];
+        let accountBalances = {
+            savings: 5000,
+            current: 2000
+        };
+
+        function nextStep() {
+            if (currentStep === 2 && !validateDateTime()) {
+                alert("Please select a future date and time.");
+                return;
+            }
+
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            currentStep++;
+            document.getElementById(`step${currentStep}`).classList.add('active');
+
+            if (currentStep === 3) {
+                const fromAccount = document.getElementById('fromAccount').value;
+                const toAccount = document.getElementById('toAccount').value;
+                const amount = document.getElementById('amount').value;
+                const frequency = document.getElementById('frequency').value;
+                const date = document.getElementById('transferDate').value;
+                const time = document.getElementById('transferTime').value;
+
+                document.getElementById('confirmationDetails').innerHTML = `
+                    <p>From: ${fromAccount}</p>
+                    <p>To: ${toAccount}</p>
+                    <p>Amount: R${amount}</p>
+                    <p>Frequency: ${frequency}</p>
+                    <p>Date: ${date}</p>
+                    <p>Time: ${time}</p>
+                    <p>Current Balance: R${accountBalances[fromAccount]}</p>
+                    <p>New Balance: R${accountBalances[fromAccount] - amount}</p>
+                `;
+            }
+        }
+
+        function confirmTransfer() {
+            const fromAccount = document.getElementById('fromAccount').value;
+            const toAccount = document.getElementById('toAccount').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('transferDate').value;
+            const time = document.getElementById('transferTime').value;
+
+            accountBalances[fromAccount] -= amount;
+
+            const dateTime = `${date} ${time}`;
+            transactions.push({dateTime, from: fromAccount, to: toAccount, amount, status: 'Scheduled'});
+            unredeemedCash.push({dateTime, from: fromAccount, to: toAccount, amount});
+
+            updateHistoryTable();
+            updateUnredeemedTable();
+
+            nextStep();
+        }
+
+        function resetSimulation() {
+            currentStep = 1;
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('amount').value = '';
+            document.getElementById('transferDate').value = '';
+            document.getElementById('transferTime').value = '';
+            updateBalance();
+        }
+
+        // Process file for spending history
+        function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please upload a file first.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const content = event.target.result;
+                document.getElementById('fileContent').textContent = content;
+
+                const suggestions = analyzeSpending(content);
+                displaySuggestions(suggestions.suggestedSpending);
+                displayRecommendedDates(suggestions.suggestedDates);
+            };
+            reader.readAsText(file);
+        }
+
+        // Display suggested spending and allow modifications
+        function displaySuggestions(suggestedSpending) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = '';
+
+            suggestedSpending.forEach((suggestion, index) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.innerHTML = `
+                    <label>${suggestion.category}: </label>
+                    R<input type="number" id="amount-${index}" value="${suggestion.amount}" step="0.01" />
+                `;
+                suggestionsDiv.appendChild(categoryDiv);
+            });
+        }
+
+        // Display recommended dates and allow modifications
+        function displayRecommendedDates(suggestedDates) {
+            const recommendedDatesDiv = document.getElementById('recommendedDates');
+            recommendedDatesDiv.innerHTML = '';
+
+            suggestedDates.forEach((date, index) => {
+                const dateDiv = document.createElement('div');
+                dateDiv.innerHTML = `
+                    <label>Recommended Date ${index + 1}: </label>
+                    <input type="date" id="date-${index}" value="${date}" />
+                `;
+                recommendedDatesDiv.appendChild(dateDiv);
+            });
+        }
+
+        // Function to analyze spending and generate suggestions
+        function analyzeSpending(fileContent) {
+            const lines = fileContent.split('\n');
+            let totalSpending = 0;
+            let categories = {};
+            let daySpending = {};
+
+            lines.forEach(line => {
+                const [date, category, amount] = line.split(',');
+                const amountNum = parseFloat(amount);
+                const day = new Date(date).getDate();
+
+                if (!categories[category]) {
+                    categories[category] = 0;
+                }
+                categories[category] += amountNum;
+                totalSpending += amountNum;
+
+                if (!daySpending[day]) {
+                    daySpending[day] = 0;
+                }
+                daySpending[day] += amountNum;
+            });
+
+            // Create spending suggestions
+            const suggestedSpending = Object.keys(categories).map(category => ({
+                category: category,
+                amount: (categories[category] * 0.9).toFixed(2) // Suggest 10% reduction
+            }));
+
+            // Suggest better spending dates based on least spending days
+            const daysSortedBySpending = Object.keys(daySpending).sort((a, b) => daySpending[a] - daySpending[b]);
+            const suggestedDates = daysSortedBySpending.slice(0, 3).map(day => {
+                const nextMonth = new Date();
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                nextMonth.setDate(day);
+                return nextMonth.toISOString().split('T')[0];
+            });
+
+            return {
+                suggestedSpending: suggestedSpending,
+                suggestedDates: suggestedDates
+            };
+        }
+
+        // Confirm the modified spending and scheduling dates
+        function confirmRecommendations() {
+            const suggestionsDiv = document.getElementById('suggestions');
+            const recommendedDatesDiv = document.getElementById('recommendedDates');
+
+            // Collect the modified amounts
+            const updatedSpending = [];
+            for (let i = 0; i < suggestionsDiv.children.length; i++) {
+                const amount = document.getElementById(`amount-${i}`).value;
+                updatedSpending.push({
+                    category: suggestionsDiv.children[i].querySelector('label').textContent.replace(':', ''),
+                    amount: parseFloat(amount)
+                });
+            }
+
+            // Collect the modified dates
+            const updatedDates = [];
+            for (let i = 0; i < recommendedDatesDiv.children.length; i++) {
+                const date = document.getElementById(`date-${i}`).value;
+                updatedDates.push(date);
+            }
+
+            // Add to transaction history and unredeemed cash
+            updatedDates.forEach((date, index) => {
+                if (index < updatedSpending.length) {
+                    const amount = updatedSpending[index].amount || 0;
+                    const transaction = {
+                        dateTime: `${date} 00:00`,
+                        from: 'savings',
+                        to: updatedSpending[index].category,
+                        amount: amount,
+                        status: 'Scheduled'
+                    };
+
+                    transactions.push(transaction);
+                    unredeemedCash.push(transaction);
+                }
+            });
+
+            // Update history and unredeemed cash
+            updateHistoryTable();
+            updateUnredeemedTable();
+            
+            alert("Recommendations confirmed and scheduled!");
+        }
+
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function updateHistoryTable() {
+            const table = document.getElementById('historyTable');
+            table.innerHTML = `
+                <tr>
+                    <th>Date & Time</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            `;
+            transactions.forEach(t => {
+                const row = table.insertRow(-1);
+                row.insertCell(0).textContent = t.dateTime;
+                row.insertCell(1).textContent = t.from;
+                row.insertCell(2).textContent = t.to;
+                row.insertCell(3).textContent = 'R' + t.amount;
+                row.insertCell(4).textContent = t.status;
+            });
+        }
+
+        function updateUnredeemedTable() {
+            const table = document.getElementById('unredeemedTable');
+            table.innerHTML = `
+                <tr>
+                    <th>Scheduled Date & Time</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            `;
+            unredeemedCash.forEach((t, index) => {
+                const row = table.insertRow(-1);
+                row.insertCell(0).textContent = t.dateTime;
+                row.insertCell(1).textContent = t.from;
+                row.insertCell(2).textContent = t.to;
+                row.insertCell(3).textContent = 'R' + t.amount;
+                const actionCell = row.insertCell(4);
+                const withdrawButton = document.createElement('button');
+                withdrawButton.textContent = 'Withdraw Early';
+                withdrawButton.onclick = () => withdrawEarly(index);
+                actionCell.appendChild(withdrawButton);
+            });
+        }
+
+        function withdrawEarly(index) {
+            const transaction = unredeemedCash[index];
+            const currentDate = new Date();
+            const scheduledDate = new Date(transaction.dateTime);
+            
+            if (currentDate < scheduledDate) {
+                const penaltyRate = Math.random() * (0.05 - 0.03) + 0.03; // Random penalty between 3% and 5%
+                const penaltyAmount = transaction.amount * penaltyRate;
+                const confirmWithdrawal = confirm(`Warning: Early withdrawal will incur a penalty fee of ${(penaltyRate * 100).toFixed(2)}% (R${penaltyAmount.toFixed(2)}). Do you want to proceed?`);
+                
+                if (confirmWithdrawal) {
+                    transactions.push({
+                        dateTime: currentDate.toISOString().replace('T', ' ').substr(0, 16),
+                        from: transaction.from,
+                        to: transaction.to,
+                        amount: transaction.amount,
+                        status: 'Withdrawn Early'
+                    });
+                    unredeemedCash.splice(index, 1);
+                    updateHistoryTable();
+                    updateUnredeemedTable();
+                    alert(`Withdrawal successful. A penalty of R${penaltyAmount.toFixed(2)} has been applied.`);
+                }
+            } else {
+                transactions.push({
+                    dateTime: currentDate.toISOString().replace('T', ' ').substr(0, 16),
+                    from: transaction.from,
+                    to: transaction.to,
+                    amount: transaction.amount,
+                    status: 'Withdrawn'
+                });
+                unredeemedCash.splice(index, 1);
+                updateHistoryTable();
+                updateUnredeemedTable();
+                alert('Withdrawal successful.');
+            }
+        }
+
+        function validateDateTime() {
+            const selectedDate = new Date(document.getElementById('transferDate').value + 'T' + document.getElementById('transferTime').value);
+            const now = new Date();
+            return selectedDate > now;
+        }
+
+        function updateBalance() {
+            const fromAccount = document.getElementById('fromAccount').value;
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const currentBalance = accountBalances[fromAccount];
+            const newBalance = currentBalance - amount;
+
+            document.getElementById('currentBalance').textContent = `Current Balance: R${currentBalance}`;
+            document.getElementById('newBalance').textContent = `New Balance after transfer: R${newBalance}`;
+        }
+
+        // Set minimum date and time to current date and time
+        function setMinDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+
+            document.getElementById('transferDate').min = `${year}-${month}-${day}`;
+            document.getElementById('transferTime').min = `${hours}:${minutes}`;
+        }
+
+        // Initialize the first tab and set minimum date and time
+        document.getElementsByClassName("tablinks")[0].click();
+        setMinDateTime();
+        updateBalance();
+    </script>
+</body>
+</html>
