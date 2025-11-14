@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capitec Budget Scheduling System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .balance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .balance-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .balance-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .balance-card .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .balance-card .change {
+            font-size: 12px;
+            margin-top: 8px;
+            color: #27ae60;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .tab-navigation {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 18px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            background: #e9ecef;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            font-size: 13px;
+            padding: 8px 16px;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+            font-size: 13px;
+            padding: 8px 16px;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f8f9fa;
+            font-size: 14px;
+            color: #666;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-scheduled {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-completed {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status-withdrawn {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-cancelled {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+            color: #333;
+        }
+
+        .modal-body {
+            margin-bottom: 25px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .confirmation-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .confirmation-details p {
+            margin: 10px 0;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .confirmation-details strong {
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-filter input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid #27ae60;
+            display: none;
+            z-index: 2000;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-navigation {
+                flex-direction: column;
+            }
+
+            .balance-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Capitec Budget Scheduling</h1>
+            <p class="subtitle">Manage your scheduled transfers and monitor your accounts</p>
+        </div>
+
+        <div class="balance-cards">
+            <div class="balance-card">
+                <h3>Savings Account</h3>
+                <div class="amount" id="savingsBalance">R5,000.00</div>
+                <div class="change">Available Balance</div>
+            </div>
+            <div class="balance-card">
+                <h3>Current Account</h3>
+                <div class="amount" id="currentBalance">R2,000.00</div>
+                <div class="change">Available Balance</div>
+            </div>
+            <div class="balance-card">
+                <h3>Scheduled Transfers</h3>
+                <div class="amount" id="scheduledCount">0</div>
+                <div class="change">Pending Transactions</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tab-navigation">
+                <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('newTransfer')">➕ New Transfer</button>
+                <button class="tab-btn" onclick="switchTab('history')">📜 History</button>
+                <button class="tab-btn" onclick="switchTab('unredeemed')">💳 Unredeemed Cash</button>
+            </div>
+
+            <div id="dashboard" class="tab-content active">
+                <h2 style="margin-bottom: 20px; color: #333;">Dashboard Overview</h2>
+                <div id="dashboardContent">
+                    <div class="empty-state">
+                        <p style="font-size: 18px; margin-bottom: 10px;">Welcome to your Budget Scheduling Dashboard</p>
+                        <p>Create your first scheduled transfer to get started!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="newTransfer" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #333;">Schedule New Transfer</h2>
+                <form id="transferForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>From Account</label>
+                            <select id="fromAccount" required>
+                                <option value="">Select account...</option>
+                                <option value="Savings Account">Savings Account (R5,000.00)</option>
+                                <option value="Current Account">Current Account (R2,000.00)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>To Account</label>
+                            <select id="toAccount" required>
+                                <option value="">Select account...</option>
+                                <option value="Savings Goal">Savings Goal</option>
+                                <option value="Credit Card Payment">Credit Card Payment</option>
+                                <option value="Investment Account">Investment Account</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Amount (R)</label>
+                        <input type="number" id="amount" min="1" step="0.01" placeholder="0.00" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Frequency</label>
+                            <select id="frequency" required>
+                                <option value="Once-off">Once-off</option>
+                                <option value="Daily">Daily</option>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Bi-weekly">Bi-weekly</option>
+                                <option value="Monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Transfer Date</label>
+                            <input type="date" id="transferDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Transfer Time</label>
+                        <input type="time" id="transferTime" required>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">Schedule Transfer</button>
+                        <button type="reset" class="btn btn-secondary">Clear Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="history" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #333;">Transaction History</h2>
+                <div class="search-filter">
+                    <input type="text" id="searchHistory" placeholder="Search transactions...">
+                    <select id="filterStatus" onchange="filterHistory()">
+                        <option value="">All Status</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Withdrawn Early">Withdrawn Early</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div id="historyContent"></div>
+            </div>
+
+            <div id="unredeemed" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #333;">Unredeemed Cash Transfers</h2>
+                <div id="unredeemedContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Transfer</h3>
+            </div>
+            <div class="modal-body">
+                <div id="modalConfirmDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="finalizeTransfer()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚠️ Early Withdrawal Warning</h3>
+            </div>
+            <div class="modal-body">
+                <div class="warning-box" id="withdrawWarning"></div>
+                <p>Are you sure you want to proceed with this early withdrawal?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmWithdrawal()">Withdraw Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let transactions = [];
+        let unredeemedCash = [];
+        let accountBalances = {
+            "Savings Account": 5000,
+            "Current Account": 2000
+        };
+        let pendingTransferData = null;
+        let pendingWithdrawal = null;
+
+        function initializeDateTimeInputs() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            document.getElementById('transferDate').setAttribute('min', today);
+            document.getElementById('transferTime').setAttribute('min', currentTime);
+
+            document.getElementById('transferDate').addEventListener('change', function() {
+                const selectedDate = this.value;
+                if (selectedDate === today) {
+                    document.getElementById('transferTime').setAttribute('min', currentTime);
+                } else {
+                    document.getElementById('transferTime').removeAttribute('min');
+                }
+            });
+        }
+
+        document.getElementById('transferForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fromAccount = document.getElementById('fromAccount').value;
+            const toAccount = document.getElementById('toAccount').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const frequency = document.getElementById('frequency').value;
+            const date = document.getElementById('transferDate').value;
+            const time = document.getElementById('transferTime').value;
+
+            const selectedDateTime = new Date(`${date}T${time}`);
+            const now = new Date();
+
+            if (selectedDateTime <= now) {
+                showNotification('Please select a future date and time', true);
+                return;
+            }
+
+            const accountKey = fromAccount.split(' (')[0];
+            if (amount > accountBalances[accountKey]) {
+                showNotification('Insufficient funds in the selected account', true);
+                return;
+            }
+
+            pendingTransferData = { fromAccount, toAccount, amount, frequency, date, time };
+
+            const oldBalance = accountBalances[accountKey];
+            const newBalance = oldBalance - amount;
+
+            document.getElementById('modalConfirmDetails').innerHTML = `
+                <div class="confirmation-details">
+                    <p><strong>From:</strong> <span>${fromAccount}</span></p>
+                    <p><strong>To:</strong> <span>${toAccount}</span></p>
+                    <p><strong>Amount:</strong> <span>R${amount.toFixed(2)}</span></p>
+                    <p><strong>Frequency:</strong> <span>${frequency}</span></p>
+                    <p><strong>Date:</strong> <span>${date}</span></p>
+                    <p><strong>Time:</strong> <span>${time}</span></p>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <p style="margin-bottom: 10px;"><strong>Balance Impact:</strong></p>
+                    <p><strong>Old Balance:</strong> <span>R${oldBalance.toFixed(2)}</span></p>
+                    <p><strong>New Balance:</strong> <span style="color: ${newBalance < 0 ? '#e74c3c' : '#27ae60'}">R${newBalance.toFixed(2)}</span></p>
+                </div>
+            `;
+
+            openModal('confirmModal');
+        });
+
+        function finalizeTransfer() {
+            const { fromAccount, toAccount, amount, frequency, date, time } = pendingTransferData;
+            const accountKey = fromAccount.split(' (')[0];
+
+            accountBalances[accountKey] -= amount;
+
+            transactions.push({
+                id: Date.now(),
+                date,
+                time,
+                from: fromAccount,
+                to: toAccount,
+                amount,
+                frequency,
+                status: 'Scheduled'
+            });
+
+            unredeemedCash.push({
+                id: Date.now(),
+                date,
+                time,
+                from: fromAccount,
+                to: toAccount,
+                amount
+            });
+
+            updateAllViews();
+            closeModal();
+            document.getElementById('transferForm').reset();
+            showNotification('Transfer scheduled successfully!');
+            switchTab('unredeemed');
+        }
+
+        function withdrawEarly(id) {
+            const transaction = unredeemedCash.find(t => t.id === id);
+            if (!transaction) return;
+
+            const scheduledDateTime = new Date(`${transaction.date}T${transaction.time}`);
+            const now = new Date();
+
+            if (now < scheduledDateTime) {
+                const penaltyRate = Math.random() * (0.05 - 0.03) + 0.03;
+                const penaltyAmount = transaction.amount * penaltyRate;
+                
+                pendingWithdrawal = { transaction, penaltyRate, penaltyAmount };
+
+                document.getElementById('withdrawWarning').innerHTML = `
+                    <strong>⚠️ Early Withdrawal Penalty</strong>
+                    <p style="margin-top: 10px;">Withdrawing before the scheduled time will incur a penalty of <strong>${(penaltyRate * 100).toFixed(2)}%</strong> (R${penaltyAmount.toFixed(2)}).</p>
+                    <p style="margin-top: 10px;">Final amount: <strong>R${(transaction.amount - penaltyAmount).toFixed(2)}</strong></p>
+                `;
+
+                openModal('withdrawModal');
+            } else {
+                processWithdrawal(transaction, 0);
+            }
+        }
+
+        function confirmWithdrawal() {
+            const { transaction, penaltyAmount } = pendingWithdrawal;
+            processWithdrawal(transaction, penaltyAmount);
+            closeModal();
+        }
+
+        function processWithdrawal(transaction, penaltyAmount) {
+            const accountKey = transaction.from.split(' (')[0];
+            const now = new Date();
+
+            accountBalances[accountKey] += (transaction.amount - penaltyAmount);
+
+            const transIndex = transactions.findIndex(t => 
+                t.date === transaction.date && 
+                t.time === transaction.time && 
+                t.amount === transaction.amount
+            );
+
+            if (transIndex !== -1) {
+                transactions[transIndex].status = penaltyAmount > 0 ? 'Withdrawn Early' : 'Completed';
+            }
+
+            unredeemedCash = unredeemedCash.filter(t => t.id !== transaction.id);
+
+            updateAllViews();
+            showNotification(penaltyAmount > 0 ? 
+                `Withdrawal completed. Penalty of R${penaltyAmount.toFixed(2)} applied.` : 
+                'Withdrawal completed successfully!'
+            );
+        }
+
+        function cancelTransfer(id) {
+            const transaction = unredeemedCash.find(t => t.id === id);
+            if (!transaction) return;
+
+            if (confirm('Are you sure you want to cancel this scheduled transfer?')) {
+                const accountKey = transaction.from.split(' (')[0];
+                accountBalances[accountKey] += transaction.amount;
+
+                const transIndex = transactions.findIndex(t => 
+                    t.date === transaction.date && 
+                    t.time === transaction.time && 
+                    t.amount === transaction.amount
+                );
+
+                if (transIndex !== -1) {
+                    transactions[transIndex].status = 'Cancelled';
+                }
+
+                unredeemedCash = unredeemedCash.filter(t => t.id !== transaction.id);
+
+                updateAllViews();
+                showNotification('Transfer cancelled successfully!');
+            }
+        }
+
+        function updateAllViews() {
+            updateBalances();
+            updateHistory();
+            updateUnredeemed();
+            updateDashboard();
+        }
+
+        function updateBalances() {
+            document.getElementById('savingsBalance').textContent = 
+                `R${accountBalances['Savings Account'].toFixed(2)}`;
+            document.getElementById('currentBalance').textContent = 
+                `R${accountBalances['Current Account'].toFixed(2)}`;
+            document.getElementById('scheduledCount').textContent = unredeemedCash.length;
+
+            const options = document.querySelectorAll('#fromAccount option');
+            options.forEach(option => {
+                const accountName = option.value.split(' (')[0];
+                if (accountBalances[accountName] !== undefined) {
+                    option.textContent = `${accountName} (R${accountBalances[accountName].toFixed(2)})`;
+                }
+            });
+        }
+
+        function updateHistory() {
+            const content = document.getElementById('historyContent');
+            
+            if (transactions.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <p>No transactions yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Date</th><th>Time</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+            
+            transactions.slice().reverse().forEach(t => {
+                const statusClass = `status-${t.status.toLowerCase().replace(' ', '-')}`;
+                html += `
+                    <tr>
+                        <td>${t.date}</td>
+                        <td>${t.time}</td>
+                        <td>${t.from.split(' (')[0]}</td>
+                        <td>${t.to}</td>
+                        <td>R${t.amount.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${t.status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        function updateUnredeemed() {
+            const content = document.getElementById('unredeemedContent');
+            
+            if (unredeemedCash.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <p>No unredeemed transfers</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Date</th><th>Time</th><th>From</th><th>To</th><th>Amount</th><th>Actions</th></tr></thead><tbody>';
+            
+            unredeemedCash.forEach(t => {
+                html += `
+                    <tr>
+                        <td>${t.date}</td>
+                        <td>${t.time}</td>
+                        <td>${t.from.split(' (')[0]}</td>
+                        <td>${t.to}</td>
+                        <td>R${t.amount.toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="withdrawEarly(${t.id})">Withdraw</button>
+                            <button class="btn btn-danger" onclick="cancelTransfer(${t.id})">Cancel</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        function updateDashboard() {
+            const content = document.getElementById('dashboardContent');
+            
+            if (transactions.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <p style="font-size: 18px; margin-bottom: 10px;">Welcome to your Budget Scheduling Dashboard</p>
+                        <p>Create your first scheduled transfer to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const totalScheduled = unredeemedCash.reduce((sum, t) => sum + t.amount, 0);
+            const completed = transactions.filter(t => t.status === 'Completed').length;
+            const withdrawn = transactions.filter(t => t.status === 'Withdrawn Early').length;
+
+            let html = `
+                <div class="balance-cards" style="margin-bottom: 30px;">
+                    <div class="balance-card">
+                        <h3>Total Scheduled</h3>
+                        <div class="amount" style="font-size: 28px;">R${totalScheduled.toFixed(2)}</div>
+                    </div>
+                    <div class="balance-card">
+                        <h3>Completed</h3>
+                        <div class="amount" style="font-size: 28px;">${completed}</div>
+                    </div>
+                    <div class="balance-card">
+                        <h3>Early Withdrawals</h3>
+                        <div class="amount" style="font-size: 28px;">${withdrawn}</div>
+                    </div>
+                </div>
+                <h3 style="margin-bottom: 15px; color: #333;">Recent Activity</h3>
+            `;
+
+            if (transactions.length > 0) {
+                html += '<table><thead><tr><th>Date</th><th>Time</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+                
+                transactions.slice(-5).reverse().forEach(t => {
+                    const statusClass = `status-${t.status.toLowerCase().replace(' ', '-')}`;
+                    html += `
+                        <tr>
+                            <td>${t.date}</td>
+                            <td>${t.time}</td>
+                            <td>${t.from.split(' (')[0]}</td>
+                            <td>${t.to}</td>
+                            <td>R${t.amount.toFixed(2)}</td>
+                            <td><span class="status-badge ${statusClass}">${t.status}</span></td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+            }
+
+            content.innerHTML = html;
+        }
+
+        function filterHistory() {
+            const filterValue = document.getElementById('filterStatus').value;
+            const searchValue = document.getElementById('searchHistory').value.toLowerCase();
+            
+            const content = document.getElementById('historyContent');
+            
+            let filteredTransactions = transactions;
+            
+            if (filterValue) {
+                filteredTransactions = filteredTransactions.filter(t => t.status === filterValue);
+            }
+            
+            if (searchValue) {
+                filteredTransactions = filteredTransactions.filter(t => 
+                    t.from.toLowerCase().includes(searchValue) ||
+                    t.to.toLowerCase().includes(searchValue) ||
+                    t.amount.toString().includes(searchValue) ||
+                    t.date.includes(searchValue)
+                );
+            }
+
+            if (filteredTransactions.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <p>No transactions found matching your criteria</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Date</th><th>Time</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr></thead><tbody>';
+            
+            filteredTransactions.slice().reverse().forEach(t => {
+                const statusClass = `status-${t.status.toLowerCase().replace(' ', '-')}`;
+                html += `
+                    <tr>
+                        <td>${t.date}</td>
+                        <td>${t.time}</td>
+                        <td>${t.from.split(' (')[0]}</td>
+                        <td>${t.to}</td>
+                        <td>R${t.amount.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${t.status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        document.getElementById('searchHistory').addEventListener('input', filterHistory);
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification show' + (isError ? ' error' : '');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        });
+
+        initializeDateTimeInputs();
+        updateAllViews();
+    </script>
+</body>
+</html>
