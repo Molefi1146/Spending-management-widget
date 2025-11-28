@@ -1,0 +1,6 @@
+FastAPI
+uvicorn
+neon-client
+pydantic
+sqlalchemy
+python-dotenv
